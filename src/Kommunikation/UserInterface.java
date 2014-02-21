@@ -29,7 +29,7 @@ public class UserInterface implements Runnable{
 				this.controller.shutdown();
 			}
 		}else
-			this.controller.sendMessage(msg, null);
+			this.controller.sendMessage(msg);
 	}
 	
 	public void close(){
