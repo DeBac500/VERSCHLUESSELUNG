@@ -1,9 +1,12 @@
 package Kommunikation;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.InvalidKeyException;
@@ -47,7 +50,8 @@ public class TCPVerbindung implements Runnable{
 		t.start();
 		if(!this.controller.getServer()){
 			this.controller.getLog().debug("Send Public");
-			send(this.controller.getPublicKey().getEncoded());
+			Message m = new Message(this.controller.getPublicKey().getEncoded(), "PKey");
+			send(m);
 		}
 	}
 	public void close(){
@@ -62,9 +66,9 @@ public class TCPVerbindung implements Runnable{
 		if(out != null)
 			try {
 				out.close();
-			} catch (IOException e) {
+			} catch (IOException e1) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				e1.printStackTrace();
 			}
 		if(socket != null)
 			try {
@@ -85,11 +89,11 @@ public class TCPVerbindung implements Runnable{
 	
 	public void sendMessage(String msg){
 		if(this.ver){
-			
 			try {
 				Cipher aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
-				aes.init(Cipher.ENCRYPT_MODE, this.controller.getKey());
-				this.send(aes.doFinal(msg.getBytes()));
+				aes.init(Cipher.ENCRYPT_MODE, this.controller.getKeyS());
+				Message m = new Message(aes.doFinal(msg.getBytes()),"Nachricht");
+				this.send(m);
 			} catch (NoSuchAlgorithmException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -107,13 +111,13 @@ public class TCPVerbindung implements Runnable{
 				e.printStackTrace();
 			}
 		}else{
-			
+			this.controller.getLog().info("Noch keine Sichere Ferbindung! \nSenden Fehlgeschlagen");
 		}
 	}
 	
-	public void send(byte[] tosend){
+	public void send(Object tosend){
 		try {
-			out.write(tosend);
+			out.writeObject(tosend);
 			out.flush();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -125,82 +129,62 @@ public class TCPVerbindung implements Runnable{
 	public void run() {
 		try{
 			while(this.run){
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				byte buffer[] = new byte[1024];
-				for(int s; (s=in.read(buffer)) > 0; )
-				{
-				  baos.write(buffer);
-				  this.controller.getLog().debug("Nachricht erhalten");
-				}
-				handleIN(baos.toByteArray());
+				Object o = in.readObject();
+				if(o instanceof Message)
+					this.handleIN((Message)o);
+				else
+					this.controller.getLog().error("Konnte nicht zugewiesen werden!");
 			}
 		}catch(IOException e){
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
-	private void handleIN(byte[] in){
-		this.controller.getLog().debug("Nachricht Erhalten1");
-		if(this.controller.getServer() && !this.ver){
-			try{
-				KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-				KeySpec keySpec = new X509EncodedKeySpec(in);
-				PublicKey k = keyFactory.generatePublic(keySpec);
-				Cipher rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-				rsa.init(Cipher.ENCRYPT_MODE, k);
-				send(rsa.doFinal(this.controller.getKey().getEncoded()));
-				this.ver = true;
-				this.controller.getLog().info("Verbindung nun Verschlüsselt!");
-			}catch(NoSuchAlgorithmException e){
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvalidKeySpecException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoSuchPaddingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvalidKeyException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalBlockSizeException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (BadPaddingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}else 
-			if(!this.controller.getServer() && !this.ver){
-				SecretKeySpec key = new SecretKeySpec(in, "AES");
-				this.controller.setKey(key);
-				this.ver = true;
-				this.controller.getLog().info("Verbindung nun Verschlüsselt!");
-			}else
-				if(this.ver){
-					try {
-						Cipher aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
-						aes.init(Cipher.DECRYPT_MODE, this.controller.getKey());
-						byte[] fin = aes.doFinal(in);
-						String msg = new String(fin);
-						this.controller.getLog().info(msg);
-						this.controller.sendMessage(in, this);
-					} catch (NoSuchAlgorithmException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (NoSuchPaddingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (InvalidKeyException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IllegalBlockSizeException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (BadPaddingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+	private void handleIN(Message msg){
+		this.controller.getLog().debug("Nachricht Erhalten2");
+		
+		if(msg.getType().equalsIgnoreCase("Nachricht") && this.ver)
+			this.controller.sendMessage(msg, this);
+			//this.controller.getLog().info("NeueNachricht");
+		else{
+			if(msg.getType().equalsIgnoreCase("PKey") && !this.ver && this.controller.getServer()){
+				try {
+					Cipher rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+					KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+					KeySpec keySpec = new X509EncodedKeySpec(msg.getMsg());
+					PublicKey keyFromBytes = keyFactory.generatePublic(keySpec);
+					rsa.init(Cipher.ENCRYPT_MODE, keyFromBytes);
+					Message m = new Message(rsa.doFinal(this.controller.getKey().getEncoded()), "Key");
+					this.send(m);
+					this.ver =true;
+				} catch (NoSuchAlgorithmException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NoSuchPaddingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InvalidKeySpecException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InvalidKeyException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalBlockSizeException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (BadPaddingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
+			}else
+				if(msg.getType().equalsIgnoreCase("Key") && !this.ver && !this.controller.getServer()){
+					this.controller.extractKey(msg);
+					this.ver = true;
+				}else
+					this.controller.getLog().error("Nachricht konnte nicht zugeordnet werden!");
+		}
 	}
 }

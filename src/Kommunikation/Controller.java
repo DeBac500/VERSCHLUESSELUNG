@@ -3,6 +3,7 @@ package Kommunikation;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -11,6 +12,10 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -25,6 +30,7 @@ public class Controller {
 	private Logger log = Logger.getRootLogger();
 	private boolean isServer;
 	private SecretKeySpec key;
+	private SecretKey tmp;
 	private PrivateKey privateKey;
 	private PublicKey publicKey;
 	private ArrayList<TCPVerbindung> clients;
@@ -85,7 +91,7 @@ public class Controller {
 		byte[] salt = "VERSCHLUESSELUNG_5AHITT_VSDBHUE".getBytes();
 		int iterations = 10000;
 		SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-		SecretKey tmp = factory.generateSecret(new PBEKeySpec(passphrase.toCharArray(), salt, iterations, 128));
+		tmp = factory.generateSecret(new PBEKeySpec(passphrase.toCharArray(), salt, iterations, 128));
 		this.key = new SecretKeySpec(tmp.getEncoded(), "AES");
 		log.info("Key generated!");
 		
@@ -102,7 +108,8 @@ public class Controller {
 	}
 	public boolean getServer(){return this.isServer;}
 	public PublicKey getPublicKey(){ return this.publicKey;}
-	public SecretKeySpec getKey(){return this.key;}
+	public SecretKey getKey(){return this.tmp;}
+	public SecretKeySpec getKeyS(){return this.key;}
 	public void setKey(SecretKeySpec key){this.key = key;}
 	public Logger getLog(){return this.log;}
 	public void shutdown(){
@@ -130,26 +137,63 @@ public class Controller {
 		this.clients.remove(tcp);
 		
 	}
-	public void sendMessage(String msg, TCPVerbindung tcp){
-		for(int i = 0; i < this.clients.size();i++){
-			if(tcp != null){
-				if(this.clients.get(i).equals(tcp)){
-					this.clients.get(i).sendMessage(msg);
-				}
-			}else{
-				this.clients.get(i).sendMessage(msg);
-			}
-		}
-	}
-	public void sendMessage(byte[] msg, TCPVerbindung tcp){
-		for(int i = 0; i < this.clients.size();i++){
-			if(tcp != null){
-				if(this.clients.get(i).equals(tcp)){
+	public void sendMessage(Message msg, TCPVerbindung tcp){
+		try {
+			Cipher aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			aes.init(Cipher.DECRYPT_MODE, this.key);
+			this.log.info(new String(aes.doFinal(msg.getMsg())));
+			for(int i = 0; i < this.clients.size();i++){
+				if(tcp != null){
+					if(!this.clients.get(i).equals(tcp)){
+						this.clients.get(i).send(msg);
+					}
+				}else{
 					this.clients.get(i).send(msg);
 				}
-			}else{
-				this.clients.get(i).send(msg);
 			}
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public void sendMessage(String msg){
+		for(int i = 0; i < this.clients.size();i++){
+			this.clients.get(i).sendMessage(msg);
+		}
+	}
+	public void extractKey(Message msg){
+		try {
+			Cipher rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+			rsa.init(Cipher.DECRYPT_MODE, this.privateKey);
+			byte[] kb = rsa.doFinal(msg.getMsg());
+			this.key = new SecretKeySpec(msg.getMsg(), "AES");
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	public static void main(String[] args){
