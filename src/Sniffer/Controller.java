@@ -2,12 +2,19 @@ package Sniffer;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Queue;
 
 import org.jnetpcap.Pcap;
 import org.jnetpcap.PcapHandler;
 import org.jnetpcap.PcapIf;
+import org.jnetpcap.packet.PcapPacket;
+import org.jnetpcap.packet.PcapPacketHandler;
+import org.jnetpcap.protocol.network.Ip4;
+import org.jnetpcap.protocol.network.Ip6;
+import org.jnetpcap.protocol.tcpip.Tcp;
 
 /**
  * This example is the classic libpcap example shown in nearly every tutorial on
@@ -69,27 +76,50 @@ public class Controller {
 		 * Third we create a packet hander which will be dispatched to from the
 		 * libpcap loop.
 		 **********************************************************************/
-		PcapHandler<String> printSummaryHandler = new PcapHandler<String>() {
+		PcapPacketHandler<Object> pph = new PcapPacketHandler<Object>() {
+			private Ip4 ip = new Ip4();
+			private Ip6 ip1 = new Ip6();
+			private Tcp tcp = new Tcp();
+		
+			@Override
+			public void nextPacket(PcapPacket packet, Object user) {
+//				if (packet.hasHeader(eth)) {
+//	        		System.out.printf("ethernet.type=%X\n", eth.type());
+//	        	}
 
-			public void nextPacket(String user, long seconds, int useconds,
-					int caplen, int len, ByteBuffer buffer) {
-				Date timestamp = new Date(seconds * 1000 + useconds / 1000); // In
-																				// millis
-
-				System.out.printf(
-						"Received packet at %s caplen=%-4d len=%-4d %s\n",
-						timestamp.toString(), // timestamp to 1 ms accuracy
-						caplen, // Length actually captured
-						len, // Original length of the packet
-						user // User supplied object
-						);
+	        	if (packet.hasHeader(tcp)&&packet.hasHeader(ip)) {
+	        		System.out.println(org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()));
+	        		System.out.println(org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination()));
+	        		System.out.println(packet.toString());
+	        		//System.out.println(packet.getUTF8String(0, 1000));
+	        	}
+			}
+			public void processIp4(Ip4 ip) {
+			    System.out.println(ip.toString());
 			}
 		};
+//		PcapHandler<String> printSummaryHandler = new PcapHandler<String>() {
+//		
+//
+//			public void nextPacket(String user, long seconds, int useconds,
+//					int caplen, int len, ByteBuffer buffer) {
+//				Date timestamp = new Date(seconds * 1000 + useconds / 1000); // In
+//																				// millis
+//
+//				System.out.printf(
+//						"Received packet at %s caplen=%-4d len=%-4d %s\n",
+//						timestamp.toString(), // timestamp to 1 ms accuracy
+//						caplen, // Length actually captured
+//						len, // Original length of the packet
+//						user // User supplied object
+//						);
+//			}
+//		};
 
 		/************************************************************
 		 * Fourth we enter the loop and tell it to capture 10 packets
 		 ************************************************************/
-		pcap.loop(10, printSummaryHandler, "jNetPcap rocks!");
+		pcap.loop(Integer.MAX_VALUE, pph, "jNetPcap rocks!");
 
 		/*
 		 * Last thing to do is close the pcap handle
