@@ -168,7 +168,7 @@ public class Controller {
 		this.log.info("Nerer Cleint Verbunden: " + socket.getInetAddress().getHostAddress());
 	}
 	public void removeClient(TCPVerbindung tcp){
-		log.info("Client Disconected: " + tcp.getEndIP());
+		log.info("Client getrennt: " + tcp.getEndIP());
 		tcp.close();
 		this.clients.remove(tcp);
 		
@@ -207,6 +207,11 @@ public class Controller {
 	public void sendMessage(String msg){
 		for(int i = 0; i < this.clients.size();i++){
 			this.clients.get(i).sendMessage(msg);
+		}
+	}
+	public void sendPlainMessage(String msg){
+		for(int i = 0; i < this.clients.size();i++){
+			this.clients.get(i).sendPlainMessage(msg);
 		}
 	}
 	public void extractKey(byte[] msg){

@@ -25,6 +25,12 @@ public class UserInterface implements Runnable{
 		}
 	}
 	public void handleIN(String msg){
+		if(msg.startsWith("!plain")){
+			String[] arg = msg.split(" ",2);
+			if(arg.length == 2 ){
+				this.controller.sendPlainMessage(arg[1]);
+			}
+		}
 		if(msg.charAt(0) == '!'){
 			String[] arg = msg.split(" ");
 			if(arg[0].equalsIgnoreCase("!end") || arg[0].equalsIgnoreCase("!exit")){
