@@ -9,7 +9,6 @@ import org.jnetpcap.PcapIf;
 /**
  * Klasse beinhaltet die Hauptklasse die einen Sniffer vorbereitet.
  * @author Alexander Rieppel
- *
  */
 public class PacketCapturer {
 	private static Pcap pcap;
@@ -105,7 +104,7 @@ public class PacketCapturer {
             
     		
         } catch (Exception ex) {
-            System.out.println(ex);
+            System.err.println(ex.getMessage());
         }
     }
 }
