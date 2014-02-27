@@ -1,10 +1,12 @@
 package Sniffer;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 import org.jnetpcap.Pcap;
+import org.jnetpcap.PcapDumper;
 import org.jnetpcap.PcapIf;
 import org.jnetpcap.packet.Payload;
 import org.jnetpcap.packet.PcapPacket;
@@ -22,7 +24,7 @@ import org.jnetpcap.protocol.tcpip.Tcp;
 public class PacketCapturer {
     public static void main(String[] args) {
         try {
-        	int chooser;
+        	double chooser=0;
         	if(args.length == 2&&args[0].equals("s")){
         		args[0]=null;
             	chooser=1;

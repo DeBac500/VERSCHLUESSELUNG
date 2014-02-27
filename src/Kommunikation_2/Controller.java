@@ -240,7 +240,7 @@ public class Controller {
 				if(args[0].equalsIgnoreCase("s")){
 					new Controller(4444);
 				}else if(args[0].equalsIgnoreCase("c")){
-					new Controller("127.0.0.1",4444);
+					new Controller("10.0.105.40",4444);
 				}
 			}else{
 				System.out.println("Wrong arguments");
