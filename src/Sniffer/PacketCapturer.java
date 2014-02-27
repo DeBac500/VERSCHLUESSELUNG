@@ -13,10 +13,33 @@ import org.jnetpcap.protocol.network.Arp;
 import org.jnetpcap.protocol.network.Ip4;
 import org.jnetpcap.protocol.network.Ip6;
 import org.jnetpcap.protocol.tcpip.Tcp;
- 
+/**
+ * Klasse beinhaltet einen Sniffer der den Traffic auf einer bestimmten Netzwerkschnittstelle mitsnifft. Er gibt in dieser
+ * Version Source- und Destination-IP, sowie die Payload in Hexadezimal und daneben in Klartext aus. 
+ * @author Alexander Rieppel
+ *
+ */
 public class PacketCapturer {
     public static void main(String[] args) {
         try {
+        	int chooser;
+        	if(args.length == 2&&args[0].equals("s")){
+        		args[0]=null;
+            	chooser=1;
+            }else if(args.length == 2&&args[0].equals("d")){
+            	chooser=1;
+            	args[0]=args[1];
+            	args[1]=null;
+            }else{
+            	System.err.println("Argumente entsprechen nicht den Richtlinien! Automatische Fortsetzung ohne Argumente!");
+            	chooser=0;
+            }
+            if(args.length==3&&args[0].equals("sd")){
+            	chooser=2;
+            }
+            if(args.length==0){
+            	chooser=0;
+            }
             // Will be filled with NICs
             List<PcapIf> alldevs = new ArrayList();
  
@@ -40,7 +63,7 @@ public class PacketCapturer {
                         : "No description available";
                 System.out.printf("#%d: %s [%s]\n", i++, device.getName(), description);
             }
-            System.out.println("choose the one device from above list of devices");
+            System.out.println("choose one device from the list above");
             int ch = new Scanner(System.in).nextInt();
             PcapIf device = (PcapIf) alldevs.get(ch);
  
@@ -59,63 +82,26 @@ public class PacketCapturer {
             System.out.println("device opened");
  
             //Create packet handler which will receive packets
-            /**********************************************************************
-    		 * Third we create a packet hander which will be dispatched to from the
-    		 * libpcap loop.
-    		 **********************************************************************/
-    		PcapPacketHandler<Object> pph = new PcapPacketHandler<Object>() {
-    			private Ip4 ip = new Ip4();
-    			private Ip6 ip1 = new Ip6();
-    			private Tcp tcp = new Tcp();
+            Sniffer sniff;
+            if(chooser==0){
+            	sniff = new Sniffer();
+            	pcap.loop(Integer.MAX_VALUE, sniff, "FINISHED!");
+            }
+            if(chooser==1){
+            	sniff = new Sniffer (args[0],args[1]);
+            	pcap.loop(Integer.MAX_VALUE, sniff, "FINISHED!");
+            }
+            if(chooser==2){
+            	sniff = new Sniffer(args[1],args[2]);
+            	//Loop to continue capturing
+            	pcap.loop(Integer.MAX_VALUE, sniff, "FINISHED!");
+            }
+    		
+    		
+            
+    		
 
-    			@Override
-    			public void nextPacket(PcapPacket packet, Object user) {
-    				// if (packet.hasHeader(eth)) {
-    				// System.out.printf("ethernet.type=%X\n", eth.type());
-    				// }
-
-    				if (packet.hasHeader(tcp) && packet.hasHeader(ip)) {
-    					//if (org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()).equalsIgnoreCase("10.0.105.40")) {
-    						System.out.printf("+----------------------------------TCP-PACKET-----------------------------------+\n"+
-    										  "Source-IP\n%s\nDest-IP\n%s\n",
-    									      org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()),
-    									      org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination()));
-    						
-    						//System.out.println("Description: \n"+packet.getHeader(tcp));
-    						System.out.println(org.jnetpcap.packet.format.FormatUtils.hexdump(packet.getHeader(tcp).getPayload()));
-    						System.out.println();
-    						// System.out.println(packet.toString());
-    						// System.out.println(packet.getUTF8String(0, 1000));
-    					//}
-    				}
-    			}
-    		};
-    		// PcapHandler<String> printSummaryHandler = new PcapHandler<String>() {
-    		//
-    		//
-    		// public void nextPacket(String user, long seconds, int useconds,
-    		// int caplen, int len, ByteBuffer buffer) {
-    		// Date timestamp = new Date(seconds * 1000 + useconds / 1000); // In
-    		// // millis
-    		//
-    		// System.out.printf(
-    		// "Received packet at %s caplen=%-4d len=%-4d %s\n",
-    		// timestamp.toString(), // timestamp to 1 ms accuracy
-    		// caplen, // Length actually captured
-    		// len, // Original length of the packet
-    		// user // User supplied object
-    		// );
-    		// }
-    		// };
-
-    		/************************************************************
-    		 * Fourth we enter the loop and tell it to capture 10 packets
-    		 ************************************************************/
-    		pcap.loop(Integer.MAX_VALUE, pph, "jNetPcap rocks!");
-
-    		/*
-    		 * Last thing to do is close the pcap handle
-    		 */
+    		//Closing the Handler
     		pcap.close();
         } catch (Exception ex) {
             System.out.println(ex);
