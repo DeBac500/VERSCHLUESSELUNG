@@ -13,19 +13,6 @@ import org.jnetpcap.PcapIf;
 public class PacketCapturer {
 	private static Pcap pcap;
     public static void main(String[] args) {
-    	new Thread(new Runnable() {
-			private Scanner in = new Scanner(System.in);
-			@Override
-			public void run() {
-				while(true)
-					handle(in.nextLine());
-			}
-			public void handle(String msg){
-				//Closing the Handler
-	    		pcap.close();
-				System.exit(0);
-			}
-		}).start();
         try {
         	double chooser=0;
         	if(args.length == 2&&args[0].equals("s")){
@@ -85,7 +72,20 @@ public class PacketCapturer {
                 return;
             }
             System.out.println("device opened");
- 
+            new Thread(new Runnable() {
+    			private Scanner in = new Scanner(System.in);
+    			@Override
+    			public void run() {
+    				while(true)
+    					handle(in.nextLine());
+    			}
+    			public void handle(String msg){
+    				//Closing the Handler
+    	    		pcap.close();
+    	    		System.out.println("Sniffer closed...");
+    				System.exit(0);
+    			}
+    		}).start();
             //Create packet handler which will receive packets
             Sniffer sniff;
             if(chooser==0){
