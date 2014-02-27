@@ -36,6 +36,9 @@ public class Controller {
 	private ArrayList<TCPVerbindung> clients;
 	private ClientRegistaration server;
 	private UserInterface ui;
+	
+	private String passphrase,salt;
+	private int port;
 	/**
 	 * Konstruktor fuer Client
 	 * @param ip
@@ -84,21 +87,47 @@ public class Controller {
 	public Controller(int port) throws NoSuchAlgorithmException, InvalidKeySpecException{
 		initLogger();
 		this.isServer=true;
-		log.info("Server starting ...");
-		
-		log.info("Generating Key....");
-		String passphrase = "ajKSHDJKSAdoeljksaDKLSCLAHeolsjkvdvnaueiodnvspnffdfbnasueodjfUENLUEBKNOEJJN";
-		byte[] salt = "VERSCHLUESSELUNG_5AHITT_VSDBHUE".getBytes();
-		int iterations = 10000;
-		SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-		tmp = factory.generateSecret(new PBEKeySpec(passphrase.toCharArray(), salt, iterations, 128));
-		this.key = new SecretKeySpec(tmp.getEncoded(), "AES");
-		log.info("Key generated!");
-		
-		this.server = new ClientRegistaration(port, this);
-		this.clients = new ArrayList<TCPVerbindung>();
 		this.ui = new UserInterface(this);
-		this.log.info("Server started");
+		log.info("Server starting ...");
+		this.port = port;
+		this.setUpServer();
+	}
+	public void setUpServer(){
+		this.log.info("Please enter a passphrase:");
+		this.ui.getPra();
+	}
+	public void setpra(String txt){
+		this.passphrase = txt;
+		this.log.info("Please enter Salt:");
+		this.ui.getSalt();
+	}
+	public void setsalt(String txt){
+		this.salt = txt;
+		this.generatekey();
+	}
+	public void generatekey(){
+		if((this.passphrase != null || this.passphrase != "") && (this.salt != null ||  this.salt != "")){
+			try {
+				log.info("Generating Key....");
+				int iterations = 10000;
+				SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+				tmp = factory.generateSecret(new PBEKeySpec(this.passphrase.toCharArray(), this.salt.getBytes(), iterations, 128));
+				this.key = new SecretKeySpec(tmp.getEncoded(), "AES");
+				log.info("Key generated!");
+				this.server = new ClientRegistaration(port, this);
+				this.clients = new ArrayList<TCPVerbindung>();
+				this.log.info("Server started");
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvalidKeySpecException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else{
+			this.log.info("Salt oder Passphrase sind nicht gesetzt bitte erneut versuchen!");
+			this.setUpServer();
+		}
 	}
 	public void initLogger(){
 		PatternLayout layout = new PatternLayout( "%d{HH:mm:ss} %m%n" );
