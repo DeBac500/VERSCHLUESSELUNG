@@ -142,14 +142,21 @@ public class Controller {
 	public void setKey(SecretKeySpec key){this.key = key;}
 	public Logger getLog(){return this.log;}
 	public void shutdown(){
-		if(this.server != null)
-			this.server.stop();
-		for(TCPVerbindung temp : this.clients){
-			this.removeClient(temp);
-		}
-		if(ui != null)
-			ui.close();
-		System.exit(0);
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				if(Controller.this.server != null)
+					Controller.this.server.stop();
+				for(TCPVerbindung temp : Controller.this.clients){
+					Controller.this.removeClient(temp);
+				}
+				if(ui != null)
+					ui.close();
+				System.exit(0);
+			}
+		});
+		
 	}
 	public void addClient(Socket socket){
 		try {
