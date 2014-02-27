@@ -15,7 +15,6 @@ import org.jnetpcap.protocol.network.Ip6;
 import org.jnetpcap.protocol.tcpip.Tcp;
  
 public class PacketCapturer {
- 
     public static void main(String[] args) {
         try {
             // Will be filled with NICs
@@ -77,10 +76,13 @@ public class PacketCapturer {
 
     				if (packet.hasHeader(tcp) && packet.hasHeader(ip)) {
     					//if (org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()).equalsIgnoreCase("10.0.105.40")) {
-    						System.out.println("Source-IP: "+ org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()));
-    						System.out.println("Dest-IP: "+ org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination()));
-    						System.out.println("Description: "+packet.getHeader(tcp));
-    						System.out.println("Payload: "+ org.jnetpcap.packet.format.FormatUtils.hexdump(packet.getHeader(tcp).getPayload()));
+    						System.out.printf("+----------------------------------TCP-PACKET-----------------------------------+\n"+
+    										  "Source-IP\n%s\nDest-IP\n%s\n",
+    									      org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()),
+    									      org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination()));
+    						
+    						//System.out.println("Description: \n"+packet.getHeader(tcp));
+    						System.out.println(org.jnetpcap.packet.format.FormatUtils.hexdump(packet.getHeader(tcp).getPayload()));
     						System.out.println();
     						// System.out.println(packet.toString());
     						// System.out.println(packet.getUTF8String(0, 1000));
