@@ -2,16 +2,25 @@ package Kommunikation;
 
 import java.util.Scanner;
 
-
+/**
+ * Verarbeitet Usereingaben
+ * @author Dominik
+ *
+ */
 public class UserInterface implements Runnable{
 	private Controller controller;
-	private boolean run;
+	private boolean run,getpr, getsalt;
 	private Scanner in;
-	
+	/**
+	 * Konstruktor
+	 * @param c
+	 */
 	public UserInterface(Controller c){
 		this.controller = c;
 		in = new Scanner(System.in);
 		run = true;
+		getpr = false;
+		getsalt = false;
 		Thread t = new Thread(this);
 		t.start();
 	}
@@ -22,16 +31,42 @@ public class UserInterface implements Runnable{
 			this.handleIN(in.nextLine());
 		}
 	}
+	/**
+	 * Verarbeitet input
+	 * @param msg
+	 */
 	public void handleIN(String msg){
-		if(msg.charAt(0) == '!'){
-			String[] arg = msg.split(" ");
-			if(arg[0].equalsIgnoreCase("!end") || arg[0].equalsIgnoreCase("!exit")){
-				this.controller.shutdown();
+		if(msg.startsWith("!plain")){
+			String[] arg = msg.split(" ",2);
+			if(arg.length == 2 ){
+				this.controller.sendPlainMessage(arg[1]);
 			}
+		}else if(msg.startsWith("!end") || msg.startsWith("!exit")){
+			this.controller.shutdown();
+		}else if(this.getpr){
+			this.controller.setpra(msg);
+			this.getpr = false;
+		}else if(this.getsalt){
+			this.controller.setsalt(msg);
+			this.getsalt = false;
 		}else
 			this.controller.sendMessage(msg);
 	}
-	
+	/**
+	 * Benaschrpucht salt
+	 */
+	public void getSalt(){
+		this.getsalt = true;
+	}
+	/**
+	 * Benaschrpucht pra
+	 */
+	public void getPra(){
+		this.getpr = true;
+	}
+	/**
+	 * Schliesst
+	 */
 	public void close(){
 		this.run = false;
 	}

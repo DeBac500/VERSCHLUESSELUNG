@@ -2,12 +2,20 @@ package Kommunikation;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-
+/**
+ * Registriert Clients
+ * @author Dominik
+ *
+ */
 public class ClientRegistaration implements Runnable{
 	private Controller controller;
 	private ServerSocket ssocket;
 	private boolean run;
-	
+	/**
+	 * Construktor
+	 * @param port
+	 * @param c
+	 */
 	public ClientRegistaration(int port, Controller c){
 		try {
 			this.controller = c;
@@ -16,7 +24,6 @@ public class ClientRegistaration implements Runnable{
 			Thread t = new Thread(this);
 			t.start();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			c.shutdown();
 		}
@@ -31,13 +38,15 @@ public class ClientRegistaration implements Runnable{
 			}
 		}
 	}
+	/**
+	 * Stopt
+	 */
 	public void stop(){
 		this.run = false;
 		if(ssocket != null)
 			try {
 				ssocket.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 	}
