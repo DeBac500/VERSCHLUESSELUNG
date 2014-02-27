@@ -26,12 +26,12 @@ public class PacketCapturer {
         try {
         	double chooser=0;
         	if(args.length == 2&&args[0].equals("s")){
-        		args[0]=null;
+        		args[0]=args[1];
+        		args[1]=null;
             	chooser=1;
             }else if(args.length == 2&&args[0].equals("d")){
             	chooser=1;
-            	args[0]=args[1];
-            	args[1]=null;
+            	args[0]=null;
             }else{
             	System.err.println("Argumente entsprechen nicht den Richtlinien! Automatische Fortsetzung ohne Argumente!");
             	chooser=0;
