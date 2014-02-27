@@ -101,6 +101,7 @@ public class TCPVerbindung implements Runnable{
 				byte[] enc = aes.doFinal(msg.getBytes("UTF8"));
 				sun.misc.BASE64Encoder base64encoder = new BASE64Encoder();
 				String s = base64encoder.encode(enc);
+				this.controller.getLog().info("Verschlüsselt: " + s);
 				this.send(s);
 			} catch (NoSuchAlgorithmException e) {
 				// TODO Auto-generated catch block
@@ -125,7 +126,9 @@ public class TCPVerbindung implements Runnable{
 			this.controller.getLog().info("Noch keine Sichere Ferbindung! \nSenden Fehlgeschlagen");
 		}
 	}
-	
+	public void sendPlainMessage(String msg){
+		this.send("!Plain!:"+msg);
+	}
 	public void send(Object tosend){
 		try {
 			out.writeObject(tosend);
@@ -152,7 +155,7 @@ public class TCPVerbindung implements Runnable{
 				this.controller.getLog().error("Conection Cloased");
 				this.controller.shutdown();
 			}else{
-				this.controller.getLog().error("Client getrennt: "+ this.getEndIP());
+				//this.controller.getLog().error("Client getrennt: "+ this.getEndIP());
 				this.controller.removeClient(this);
 			}
 		}
@@ -191,33 +194,37 @@ public class TCPVerbindung implements Runnable{
 			this.ver = true;
 		}else if(o instanceof String){
 			String m = (String)o;
-			try {
-				sun.misc.BASE64Decoder base64decoder = new BASE64Decoder();
-				Cipher aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
-				aes.init(Cipher.DECRYPT_MODE, this.controller.getKeyS());
-				String msg = new String(aes.doFinal(base64decoder.decodeBuffer(m)));
-				this.controller.getLog().info(msg);
-			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoSuchPaddingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvalidKeyException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalBlockSizeException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (BadPaddingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			if(m.startsWith("!Plain!:")){
+				this.controller.getLog().info(m.replaceFirst("!Plain!:", ""));
+			}else{
+				try {
+					sun.misc.BASE64Decoder base64decoder = new BASE64Decoder();
+					Cipher aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
+					aes.init(Cipher.DECRYPT_MODE, this.controller.getKeyS());
+					String msg = new String(aes.doFinal(base64decoder.decodeBuffer(m)));
+					this.controller.getLog().info(msg);
+				} catch (NoSuchAlgorithmException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NoSuchPaddingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InvalidKeyException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalBlockSizeException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (BadPaddingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 	}
