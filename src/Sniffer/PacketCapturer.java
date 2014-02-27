@@ -3,18 +3,23 @@ package Sniffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
 import org.jnetpcap.Pcap;
 import org.jnetpcap.PcapIf;
+import org.jnetpcap.packet.Payload;
 import org.jnetpcap.packet.PcapPacket;
 import org.jnetpcap.packet.PcapPacketHandler;
 import org.jnetpcap.protocol.network.Arp;
+import org.jnetpcap.protocol.network.Ip4;
+import org.jnetpcap.protocol.network.Ip6;
+import org.jnetpcap.protocol.tcpip.Tcp;
  
 public class PacketCapturer {
  
     public static void main(String[] args) {
         try {
             // Will be filled with NICs
-            List alldevs = new ArrayList();
+            List<PcapIf> alldevs = new ArrayList();
  
             // For any error msgs
             StringBuilder errbuf = new StringBuilder();
@@ -38,7 +43,7 @@ public class PacketCapturer {
             }
             System.out.println("choose the one device from above list of devices");
             int ch = new Scanner(System.in).nextInt();
-            PcapIf device = alldevs.get(ch);
+            PcapIf device = (PcapIf) alldevs.get(ch);
  
             int snaplen = 64 * 1024;           // Capture all packets, no trucation
             int flags = Pcap.MODE_PROMISCUOUS; // capture all packets
@@ -55,24 +60,61 @@ public class PacketCapturer {
             System.out.println("device opened");
  
             //Create packet handler which will receive packets
-            PcapPacketHandler jpacketHandler = new PcapPacketHandler() {
-                Arp arp = new Arp();
- 
-                @Override
-                public void nextPacket(PcapPacket packet, String user) {
-                    //Here i am capturing the ARP packets only,you can capture any packet that you want by just changing the below if condition
-                    if (packet.hasHeader(arp)) {
-                        System.out.println("Hardware type" + arp.hardwareType());
-                        System.out.println("Protocol type" + arp.protocolType());
-                        System.out.println("Packet:" + arp.getPacket());
-                        System.out.println();
-                    }
-                }
-            };
-            //we enter the loop and capture the 10 packets here.You can  capture any number of packets just by changing the first argument to pcap.loop() function below
-            pcap.loop(10, jpacketHandler, "jnetpcap rocks!");
-            //Close the pcap
-            pcap.close();
+            /**********************************************************************
+    		 * Third we create a packet hander which will be dispatched to from the
+    		 * libpcap loop.
+    		 **********************************************************************/
+    		PcapPacketHandler<Object> pph = new PcapPacketHandler<Object>() {
+    			private Ip4 ip = new Ip4();
+    			private Ip6 ip1 = new Ip6();
+    			private Tcp tcp = new Tcp();
+
+    			@Override
+    			public void nextPacket(PcapPacket packet, Object user) {
+    				// if (packet.hasHeader(eth)) {
+    				// System.out.printf("ethernet.type=%X\n", eth.type());
+    				// }
+
+    				if (packet.hasHeader(tcp) && packet.hasHeader(ip)) {
+    					//if (org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()).equalsIgnoreCase("10.0.105.40")) {
+    						System.out.println("Source-IP: "+ org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()));
+    						System.out.println("Dest-IP: "+ org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination()));
+    						System.out.println("Description: "+packet.getHeader(tcp));
+    						System.out.println("Payload: "+ org.jnetpcap.packet.format.FormatUtils.hexdump(packet.getHeader(tcp).getPayload()));
+    						System.out.println();
+    						// System.out.println(packet.toString());
+    						// System.out.println(packet.getUTF8String(0, 1000));
+    					//}
+    				}
+    			}
+    		};
+    		// PcapHandler<String> printSummaryHandler = new PcapHandler<String>() {
+    		//
+    		//
+    		// public void nextPacket(String user, long seconds, int useconds,
+    		// int caplen, int len, ByteBuffer buffer) {
+    		// Date timestamp = new Date(seconds * 1000 + useconds / 1000); // In
+    		// // millis
+    		//
+    		// System.out.printf(
+    		// "Received packet at %s caplen=%-4d len=%-4d %s\n",
+    		// timestamp.toString(), // timestamp to 1 ms accuracy
+    		// caplen, // Length actually captured
+    		// len, // Original length of the packet
+    		// user // User supplied object
+    		// );
+    		// }
+    		// };
+
+    		/************************************************************
+    		 * Fourth we enter the loop and tell it to capture 10 packets
+    		 ************************************************************/
+    		pcap.loop(Integer.MAX_VALUE, pph, "jNetPcap rocks!");
+
+    		/*
+    		 * Last thing to do is close the pcap handle
+    		 */
+    		pcap.close();
         } catch (Exception ex) {
             System.out.println(ex);
         }
