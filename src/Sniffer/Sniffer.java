@@ -13,6 +13,13 @@ import org.jnetpcap.protocol.network.Ip4;
 import org.jnetpcap.protocol.network.Ip6;
 import org.jnetpcap.protocol.tcpip.Tcp;
 
+/**
+ * Sniffer der auschließlich TCP-Pakete mitsnifft. In dieser Version gibt er Source- und Destination-IP, sowie die Payload des
+ * Paketes aus. Zusätzlich ist es möglich Filter in Form von Source-IP und Destination-IP oder nur eines von beiden
+ * anzugeben.
+ * @author Alexander Rieppel
+ *
+ */
 public class Sniffer implements PcapPacketHandler {
 	private Ip4 ip = new Ip4();
 	private Ip6 ip1 = new Ip6();
@@ -36,15 +43,6 @@ public class Sniffer implements PcapPacketHandler {
 		if((sourFilter!=null||sourFilter!="")&&(destFilter!=null||destFilter!="")){
 			this.sourFilter = sourFilter;
 			this.destFilter = destFilter;
-			if(this.sourFilter=="s"){
-				sourFilter=destFilter;
-				destFilter=null;
-			}else if(this.sourFilter=="d"){
-				sourFilter=null;
-			}
-		}else{
-			this.sourFilter = null;
-			this.destFilter = null;
 		}
 	}
 
@@ -63,11 +61,15 @@ public class Sniffer implements PcapPacketHandler {
 		this.destFilter = null;
 	}
 
+	
 	@Override
+	/**
+	 * Methode welche sich jeweils immer ein Paket nimmt und es analysiert.
+	 */
 	public void nextPacket(PcapPacket packet, Object user) {
 			if (packet.hasHeader(tcp) && packet.hasHeader(ip)) {
 				if(sourFilter==null){
-					if(org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()).equalsIgnoreCase(destFilter)){
+					if(org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination()).equalsIgnoreCase(destFilter)){
 						log.info("+----------------------------------TCP-PACKET-----------------------------------+\n"
 								+ "Source-IP\n"+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source())+"\nDest-IP\n"
 								+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination())+"\n\n");
@@ -78,7 +80,7 @@ public class Sniffer implements PcapPacketHandler {
 						log.info("\n");
 					}
 				}else if(destFilter==null){
-					if(org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination()).equalsIgnoreCase(sourFilter)){
+					if(org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()).equalsIgnoreCase(sourFilter)){
 						log.info("+----------------------------------TCP-PACKET-----------------------------------+\n"
 								+ "Source-IP\n"+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source())+"\nDest-IP\n"
 								+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination())+"\n\n");

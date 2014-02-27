@@ -1,28 +1,32 @@
 package Sniffer;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 import org.jnetpcap.Pcap;
-import org.jnetpcap.PcapDumper;
 import org.jnetpcap.PcapIf;
-import org.jnetpcap.packet.Payload;
-import org.jnetpcap.packet.PcapPacket;
-import org.jnetpcap.packet.PcapPacketHandler;
-import org.jnetpcap.protocol.network.Arp;
-import org.jnetpcap.protocol.network.Ip4;
-import org.jnetpcap.protocol.network.Ip6;
-import org.jnetpcap.protocol.tcpip.Tcp;
 /**
- * Klasse beinhaltet einen Sniffer der den Traffic auf einer bestimmten Netzwerkschnittstelle mitsnifft. Er gibt in dieser
- * Version Source- und Destination-IP, sowie die Payload in Hexadezimal und daneben in Klartext aus. 
+ * Klasse beinhaltet die Hauptklasse die einen Sniffer vorbereitet.
  * @author Alexander Rieppel
  *
  */
 public class PacketCapturer {
+	private static Pcap pcap;
     public static void main(String[] args) {
+    	new Thread(new Runnable() {
+			private Scanner in = new Scanner(System.in);
+			@Override
+			public void run() {
+				while(true)
+					handle(in.nextLine());
+			}
+			public void handle(String msg){
+				//Closing the Handler
+	    		pcap.close();
+				System.exit(0);
+			}
+		}).start();
         try {
         	double chooser=0;
         	if(args.length == 2&&args[0].equals("s")){
@@ -74,7 +78,7 @@ public class PacketCapturer {
             int timeout = 10 * 1000;           // 10 seconds in millis
  
             //Open the selected device to capture packets
-            Pcap pcap = Pcap.openLive(device.getName(), snaplen, flags, timeout, errbuf);
+            pcap = Pcap.openLive(device.getName(), snaplen, flags, timeout, errbuf);
  
             if (pcap == null) {
                 System.err.printf("Error while opening device for capture: "
@@ -98,13 +102,8 @@ public class PacketCapturer {
             	//Loop to continue capturing
             	pcap.loop(Integer.MAX_VALUE, sniff, "FINISHED!");
             }
-    		
-    		
             
     		
-
-    		//Closing the Handler
-    		pcap.close();
         } catch (Exception ex) {
             System.out.println(ex);
         }
