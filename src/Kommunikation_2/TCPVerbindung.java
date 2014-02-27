@@ -1,4 +1,4 @@
-package Kommunikation;
+package Kommunikation_2;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.InvalidKeyException;
@@ -23,11 +24,14 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
+
 public class TCPVerbindung implements Runnable{
 	private Socket socket;
 	private boolean ver, run;
-	private BufferedReader in;
-	private PrintWriter out;
+	private ObjectInputStream in;
+	private ObjectOutputStream out;
 	private Controller controller;
 	private String empf;
 	
@@ -46,16 +50,14 @@ public class TCPVerbindung implements Runnable{
 	
 	private void open() throws IOException{
 		run=true;
-		out = new PrintWriter(socket.getOutputStream());
-		in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		out = new ObjectOutputStream(socket.getOutputStream());
+		in = new ObjectInputStream(socket.getInputStream());
 		Thread t = new Thread(this);
 		t.start();
 		if(!this.controller.getServer()){
 			this.controller.getLog().debug("Send Public");
 			//TODO send public key
-			String s = new String(this.controller.getPublicKey().getEncoded());
-			this.controller.getLog().info(s);
-			this.send(s);
+			this.send(this.controller.getPublicKey());
 		}
 	}
 	public void close(){
@@ -68,7 +70,12 @@ public class TCPVerbindung implements Runnable{
 				e.printStackTrace();
 			}
 		if(out != null)
-			out.close();
+			try {
+				out.close();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		if(socket != null)
 			try {
 				socket.close();
@@ -91,7 +98,10 @@ public class TCPVerbindung implements Runnable{
 			try {
 				Cipher aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
 				aes.init(Cipher.ENCRYPT_MODE, this.controller.getKeyS());
-				this.send(new String(aes.doFinal(msg.getBytes())));
+				byte[] enc = aes.doFinal(msg.getBytes("UTF8"));
+				sun.misc.BASE64Encoder base64encoder = new BASE64Encoder();
+				String s = base64encoder.encode(enc);
+				this.send(s);
 			} catch (NoSuchAlgorithmException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -105,6 +115,9 @@ public class TCPVerbindung implements Runnable{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (BadPaddingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -113,52 +126,53 @@ public class TCPVerbindung implements Runnable{
 		}
 	}
 	
-	public void send(String tosend){
-		out.print(tosend);
-		out.flush();
+	public void send(Object tosend){
+		try {
+			out.writeObject(tosend);
+			out.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	@Override
 	public void run() {
 		try{
 			while(this.run){
-				if(in.ready()){
-					char[] input = new char[1024];
-					String txt = "";
-					while(in.ready()){
-						in.read(input);
-						System.out.println("TEST");
-						txt += String.valueOf(input);
-						input = new char[1024];
-					}
-					handleIN(txt);
+				try {
+					this.handleIN(in.readObject());
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 		}catch(IOException e){
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			if(!this.controller.getServer()){
+				this.controller.getLog().error("Conection Cloased");
+				this.controller.shutdown();
+			}else{
+				this.controller.getLog().error("Client getrennt: "+ this.getEndIP());
+				this.controller.removeClient(this);
+			}
 		}
 	}
 		
-	private void handleIN(String msg){
-		this.controller.getLog().debug("Nachricht Erhalten:");
-		this.controller.getLog().debug(msg + "\n");
-		if(!this.ver && this.controller.getServer()){
-			try {
+	private void handleIN(Object o){
+		if(o instanceof PublicKey){
+			try{
+				PublicKey k = (PublicKey)o;
 				Cipher rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-				PublicKey publicKey = 
-					    KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(msg.getBytes()));
-				rsa.init(Cipher.ENCRYPT_MODE, publicKey);
-				this.send(new String(rsa.doFinal(this.controller.getKey().getEncoded())));
-				this.controller.getLog().info("send Symetric key!");
+				rsa.init(Cipher.ENCRYPT_MODE, k);
+				SymetricK kk = new SymetricK(rsa.doFinal(this.controller.getKey().getEncoded()));
+				this.send(kk);
+				this.controller.getLog().info("Symetirc key gesendet!");
+				//this.controller.getLog().debug(this.controller.getKeyS());
 				this.ver = true;
-			} catch (NoSuchAlgorithmException e) {
+			}catch(NoSuchAlgorithmException e){
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (NoSuchPaddingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvalidKeySpecException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (InvalidKeyException e) {
@@ -171,13 +185,40 @@ public class TCPVerbindung implements Runnable{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}else if(!this.ver && !this.controller.getServer()){
-			this.controller.extractKey(msg);
+		}else if(o instanceof SymetricK){
+			SymetricK k = (SymetricK)o;
+			this.controller.extractKey(k.getK());
 			this.ver = true;
-		}else if(this.ver){
-			this.controller.sendMessage(msg, this);
-		}else{
-			this.controller.getLog().error("Nachricht konnte nicht zugeordnet werden!");
+		}else if(o instanceof String){
+			String m = (String)o;
+			try {
+				sun.misc.BASE64Decoder base64decoder = new BASE64Decoder();
+				Cipher aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
+				aes.init(Cipher.DECRYPT_MODE, this.controller.getKeyS());
+				String msg = new String(aes.doFinal(base64decoder.decodeBuffer(m)));
+				this.controller.getLog().info(msg);
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NoSuchPaddingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvalidKeyException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalBlockSizeException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (BadPaddingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 }

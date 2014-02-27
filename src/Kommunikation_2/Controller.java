@@ -1,4 +1,4 @@
-package Kommunikation;
+package Kommunikation_2;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -173,13 +173,14 @@ public class Controller {
 			this.clients.get(i).sendMessage(msg);
 		}
 	}
-	public void extractKey(String msg){
+	public void extractKey(byte[] msg){
 		try {
 			Cipher rsa = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 			rsa.init(Cipher.DECRYPT_MODE, this.privateKey);
-			byte[] kb = rsa.doFinal(msg.getBytes());
+			byte[] kb = rsa.doFinal(msg);
 			this.key = new SecretKeySpec(kb, "AES");
 			this.log.info("Symetric key recieved!");
+			//this.log.debug(this.key);
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
