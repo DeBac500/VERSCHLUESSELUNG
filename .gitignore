@@ -3,5 +3,10 @@
 # Package Files #
 *.war
 *.ear
+*.synctex.gz
+*.aux
+*.log
+*.toc
+*.db
 /bin
 .classpath

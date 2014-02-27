@@ -16,7 +16,7 @@ import org.jnetpcap.protocol.tcpip.Tcp;
 /**
  * Sniffer der auschließlich TCP-Pakete mitsnifft. In dieser Version gibt er Source- und Destination-IP, sowie die Payload des
  * Paketes aus. Zusätzlich ist es möglich Filter in Form von Source-IP und Destination-IP oder nur eines von beiden
- * anzugeben.
+ * anzugeben. Zusätzlich wird der gesamte Trace in einem File mitgeschrieben.
  * @author Alexander Rieppel
  *
  */
