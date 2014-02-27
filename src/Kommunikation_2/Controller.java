@@ -156,6 +156,7 @@ public class Controller {
 				System.exit(0);
 			}
 		});
+		System.exit(0);
 		
 	}
 	public void addClient(Socket socket){

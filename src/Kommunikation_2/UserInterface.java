@@ -30,12 +30,8 @@ public class UserInterface implements Runnable{
 			if(arg.length == 2 ){
 				this.controller.sendPlainMessage(arg[1]);
 			}
-		}
-		if(msg.charAt(0) == '!'){
-			String[] arg = msg.split(" ");
-			if(arg[0].equalsIgnoreCase("!end") || arg[0].equalsIgnoreCase("!exit")){
-				this.controller.shutdown();
-			}
+		}else if(msg.startsWith("!end") || msg.startsWith("!exit")){
+			this.controller.shutdown();
 		}else if(this.getpr){
 			this.controller.setpra(msg);
 			this.getpr = false;
