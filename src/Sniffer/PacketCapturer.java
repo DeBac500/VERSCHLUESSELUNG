@@ -19,6 +19,8 @@ public class PacketCapturer {
         		args[0]=args[1];
         		args[1]=null;
             	chooser=1;
+            }else if(args.length == 2&&args[0].equals("all")){
+            	chooser=1;
             }else if(args.length == 2&&args[0].equals("d")){
             	chooser=1;
             	args[0]=null;
@@ -28,7 +30,7 @@ public class PacketCapturer {
             	chooser=0;
             }else{
             	System.err.println("Arguments wrong! \n "
-            			+ "Type in like this: <s|d|sd> <source-IP> <destination-IP> \n ");
+            			+ "Type in like this: <s|d|sd|all> <source-IP> <destination-IP> \n ");
             	System.exit(0);
             }
             
@@ -106,7 +108,7 @@ public class PacketCapturer {
             
     		
         } catch (Exception ex) {
-            System.err.println(ex.getMessage());
+            System.err.println("Unhandled Error!");
         }
     }
 }
