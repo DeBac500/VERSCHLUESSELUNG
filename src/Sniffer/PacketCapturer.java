@@ -23,8 +23,9 @@ public class PacketCapturer {
             	chooser=1;
             	args[0]=null;
             }else{
-            	System.err.println("Argumente entsprechen nicht den Richtlinien! Automatische Fortsetzung ohne Argumente!");
-            	chooser=0;
+            	System.err.println("Arguments wrong! \n "
+            			+ "Type in like this: <s|d|sd> <source-IP> <destination-IP> \n ");
+            	System.exit(0);
             }
             if(args.length==3&&args[0].equals("sd")){
             	chooser=2;
@@ -72,6 +73,7 @@ public class PacketCapturer {
                 return;
             }
             System.out.println("device opened");
+            System.out.println("Exit program with ENTER...");
             new Thread(new Runnable() {
     			private Scanner in = new Scanner(System.in);
     			@Override
