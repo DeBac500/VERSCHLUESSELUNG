@@ -313,9 +313,25 @@ public class Controller {
 				}else if(args[0].equalsIgnoreCase("cd")){
 					new Controller("127.0.0.1",4444);
 				}else if(args[0].equalsIgnoreCase("s")){
-					new Controller(Integer.parseInt(args[1]));
+					if(args.length == 2)
+						new Controller(Integer.parseInt(args[1]));
+					else{
+						System.out.println("Wrong arguments");
+						System.out.println("<ds>");
+						System.out.println("<dc>");
+						System.out.println("<s> <port>");
+						System.out.println("<c> <IP> <port>");
+					}
 				}else if(args[0].equalsIgnoreCase("c")){
-					new Controller(args[1], Integer.parseInt(args[2]));
+					if(args.length == 3)
+						new Controller(args[1], Integer.parseInt(args[2]));
+					else{
+						System.out.println("Wrong arguments");
+						System.out.println("<ds>");
+						System.out.println("<dc>");
+						System.out.println("<s> <port>");
+						System.out.println("<c> <IP> <port>");
+					}
 				}
 			}else{
 				System.out.println("Wrong arguments");
