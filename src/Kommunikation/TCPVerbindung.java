@@ -63,7 +63,7 @@ public class TCPVerbindung implements Runnable{
 		Thread t = new Thread(this);
 		t.start();
 		if(!this.controller.getServer()){
-			this.controller.getLog().debug("Send Public");
+			this.controller.getLog().debug("Public-Key wird gesendet");
 			this.send(this.controller.getPublicKey());
 		}
 	}
@@ -169,7 +169,7 @@ public class TCPVerbindung implements Runnable{
 			}
 		}catch(IOException e){
 			if(!this.controller.getServer()){
-				this.controller.getLog().error("Conection Cloased");
+				this.controller.getLog().error("Conection geschlossen");
 				this.controller.shutdown();
 			}else{
 				this.controller.removeClient(this);
