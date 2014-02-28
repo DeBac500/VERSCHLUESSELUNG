@@ -60,7 +60,8 @@ Nachdem wir die Verschlüsselungsmethoden die Java bietet implementiert und gete
 Als auch diese Entscheidung getroffen wurde, haben wir noch ein Konzept erstellt welches es uns ermöglicht verschlüsselte und unverschlüsselte Nachrichten gleichzeitig zu senden und auch auseinander zu halten.
 Somit wurde noch ein kleiner Chat hinzugefügt und das Programm finalisiert.
 \section{Sniffer}
-	Der Sniffer wurde so wie in der Designüberlegung angegeben implementiert. Jedoch wird zusätzlich zu Library jnetPcap auch die Library log4j verwendet, für das mitloggen des Netzwerk-Traces verwendet. Dies wurde so entschieden, da das Arbeiten mit log4j sehr komfortabel und einfach ist und somit auch das File entsprechend schön erstellt wird. Zusätzlich kann man bei der Ausführung als Filter eine Source- und Destination-IP angeben um nur Pakete mit einer bestimmten IP im Header zu erhalten. Wie ebenfalls angegeben war es für die Implementierung des Sniffers lediglich notwendig die entsprechenden Methoden der besagten Library jnetPcap aufzurufen und die Daten auszugeben. Ausgegeben werden eine Kopfzeile für den Start einer neuen Sniffing-Session, mit dem gewählten Filter, Source- und Destination-IP des Paketes und die entsprechende Payload des Paketes als hexadzimaler Dump mit Klartext daneben. Dieser Klartext stellt den Inhalt des Pakets dar. 
+	Der Sniffer wurde so wie in der Designüberlegung angegeben implementiert. Jedoch wird zusätzlich zu Library jnetPcap auch die Library log4j verwendet, für das mitloggen des Netzwerk-Traces verwendet. Dies wurde so entschieden, da das Arbeiten mit log4j sehr komfortabel und einfach ist und somit auch das File entsprechend schön erstellt wird. Wichtig wäre noch zu erwähnen, dass jnetpcap nur dann richtig ausgeführt werden kann wenn die beigelegte .dll datei im lib ordenr an die richtige Stelle kopiert. Diese Information ist der Readme im Downloadpackage der Library zu entnehmen. 
+Bei der Ausführung kann man als Filter eine Source- und Destination-IP angeben um nur Pakete mit einer bestimmten IP im Header zu erhalten. Wie ebenfalls angegeben war es für die Implementierung des Sniffers lediglich notwendig die entsprechenden Methoden der besagten Library jnetPcap aufzurufen und die Daten auszugeben. Ausgegeben werden eine Kopfzeile für den Start einer neuen Sniffing-Session, mit dem gewählten Filter, Source- und Destination-IP des Paketes und die entsprechende Payload des Paketes als hexadzimaler Dump mit Klartext daneben. Dieser Klartext stellt den Inhalt des Pakets dar. 
 	
 \chapter{Testbericht}
 \section{Verschlüsselung}
@@ -76,11 +77,10 @@ Somit wurde noch ein kleiner Chat hinzugefügt und das Programm finalisiert.
 \section{Sniffer}
 	Um den Sniffer auszuführen gibt es mehrere Möglichkeiten, wobei folgende Argumente notwendig sind:
 	\begin{itemize}
-	\item <s|d|sd>
-	\item <SourceIP>
-	\item <DestinationIP>
+	\item <s> <SourceIP> Für Filter mit nur source IP 
+	\item <d> <DestinationIP> Für Filter mit nur DestinationIP
+	\item <sd> <SourceIP> <DestinationIP> Für Filter mit Source und DestinationIP
+	\item <all> <IP> Filter für Pakete mit entweder source oder DestinationIP
 	\end{itemize} 
-	
-	Beim ersten Argument ist zu beachten, dass das 's' nur für einen Source-IP Filter, das 'd' nur für einen Destination-IP Filter und 'sd' für einen Source- und Destination-IP Filter. Demnach ist bei 's' nur eine SourceIP-Adresse, bei 'd' nur eine DestinationIP-Adresse und bei 'sd' beide Typen von Adressen anzugeben.
 
 \end{document}
