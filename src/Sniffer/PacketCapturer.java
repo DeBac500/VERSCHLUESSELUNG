@@ -22,17 +22,17 @@ public class PacketCapturer {
             }else if(args.length == 2&&args[0].equals("d")){
             	chooser=1;
             	args[0]=null;
+            }else if(args.length==3&&args[0].equals("sd")){
+            	chooser=2;
+            }else  if(args.length==0){
+            	chooser=0;
             }else{
             	System.err.println("Arguments wrong! \n "
             			+ "Type in like this: <s|d|sd> <source-IP> <destination-IP> \n ");
             	System.exit(0);
             }
-            if(args.length==3&&args[0].equals("sd")){
-            	chooser=2;
-            }
-            if(args.length==0){
-            	chooser=0;
-            }
+            
+           
             // Will be filled with NICs
             List<PcapIf> alldevs = new ArrayList();
  

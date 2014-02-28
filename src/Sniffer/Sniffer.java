@@ -37,8 +37,8 @@ public class Sniffer implements PcapPacketHandler {
 		}
 		log.addAppender(con);
 		log.setLevel(Level.ALL);
-		log.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
-				+"++++++++++++++++++++++++++++++++++NEW SESSION+++++++++++++++++++++++++++++++++++++\n"
+		log.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
+				+"++++++++++++++++++++++++++++++++++NEW SESSION+++++++++++++++++++++++++++++++++++\n"
 				+ "with Filter Source: "+sourFilter+" Destination: "+destFilter);
 		if((sourFilter!=null||sourFilter!="")&&(destFilter!=null||destFilter!="")){
 			this.sourFilter = sourFilter;
@@ -54,8 +54,8 @@ public class Sniffer implements PcapPacketHandler {
 		}
 		log.addAppender(con);
 		log.setLevel(Level.ALL);
-		log.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
-				+"++++++++++++++++++++++++++++++++++NEW SESSION+++++++++++++++++++++++++++++++++++++\n"
+		log.info("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
+				+"++++++++++++++++++++++++++++++++++NEW SESSION+++++++++++++++++++++++++++++++++++\n"
 				+ "with Filter Source: "+sourFilter+" Destination: "+destFilter+"\n");
 		this.sourFilter = null;
 		this.destFilter = null;
@@ -68,9 +68,9 @@ public class Sniffer implements PcapPacketHandler {
 	 */
 	public void nextPacket(PcapPacket packet, Object user) {
 			if (packet.hasHeader(tcp) && packet.hasHeader(ip)) {
-				if(sourFilter==null){
+				if(sourFilter==null&&destFilter!=null){
 					if(org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination()).equalsIgnoreCase(destFilter)){
-						log.info("+----------------------------------TCP-PACKET-----------------------------------+\n"
+						log.info("+----------------------------------TCP-PACKET----------------------------------+\n"
 								+ "Source-IP\n"+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source())+"\nDest-IP\n"
 								+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination())+"\n\n");
 
@@ -79,9 +79,9 @@ public class Sniffer implements PcapPacketHandler {
 						log.info("PAYLOAD\n"+ org.jnetpcap.packet.format.FormatUtils.hexdump(packet.getHeader(tcp).getPayload()));
 						log.info("\n");
 					}
-				}else if(destFilter==null){
+				}else if(destFilter==null&&sourFilter!=null){
 					if(org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()).equalsIgnoreCase(sourFilter)){
-						log.info("+----------------------------------TCP-PACKET-----------------------------------+\n"
+						log.info("+----------------------------------TCP-PACKET----------------------------------+\n"
 								+ "Source-IP\n"+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source())+"\nDest-IP\n"
 								+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination())+"\n\n");
 
@@ -90,10 +90,19 @@ public class Sniffer implements PcapPacketHandler {
 						log.info("PAYLOAD\n"+ org.jnetpcap.packet.format.FormatUtils.hexdump(packet.getHeader(tcp).getPayload()));
 						log.info("\n");
 					}
+				}else if(sourFilter==null&&destFilter==null){
+					log.info("+----------------------------------TCP-PACKET----------------------------------+\n"
+							+ "Source-IP\n"+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source())+"\nDest-IP\n"
+							+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination())+"\n\n");
+
+							
+					//System.out.println("Description: \n"+packet.getHeader(tcp));
+					log.info("PAYLOAD\n"+ org.jnetpcap.packet.format.FormatUtils.hexdump(packet.getHeader(tcp).getPayload()));
+					log.info("\n");
 				}else
-				if(org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()).equalsIgnoreCase(sourFilter)&&
+				if(sourFilter!=null&&destFilter!=null&&org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source()).equalsIgnoreCase(sourFilter)&&
 				   org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination()).equalsIgnoreCase(destFilter)){
-					log.info("+----------------------------------TCP-PACKET-----------------------------------+\n"
+					log.info("+----------------------------------TCP-PACKET----------------------------------+\n"
 							+ "Source-IP\n"+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).source())+"\nDest-IP\n"
 							+org.jnetpcap.packet.format.FormatUtils.ip(packet.getHeader(ip).destination())+"\n\n");
 
