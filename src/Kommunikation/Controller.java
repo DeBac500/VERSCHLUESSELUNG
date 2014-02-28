@@ -51,14 +51,14 @@ public class Controller {
 	public Controller(String ip, int port) throws NoSuchAlgorithmException{
 		initLogger();
 		this.isServer = false;
-		log.info("Client starting ...");
+		log.info("Client startet ...");
 		
-		log.info("Generating Key....");
+		log.info("Key wird generiert....");
 		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
 		KeyPair keyPair = keyPairGenerator.generateKeyPair();
 		publicKey = keyPair.getPublic();
 		privateKey = keyPair.getPrivate();
-		log.info("Key generated!");
+		log.info("Key wurde generiert!");
 		
 		
 		this.clients = new ArrayList<TCPVerbindung>();
@@ -74,7 +74,7 @@ public class Controller {
 		}
 		
 		this.ui = new UserInterface(this);
-		this.log.info("Client started");
+		this.log.info("Client gestarted!");
 	}
 	/**
 	 * Konstruktor fuer Server
@@ -86,7 +86,7 @@ public class Controller {
 		initLogger();
 		this.isServer=true;
 		this.ui = new UserInterface(this);
-		log.info("Server starting ...");
+		log.info("Server startet ...");
 		this.port = port;
 		this.setUpServer();
 	}
@@ -120,15 +120,15 @@ public class Controller {
 	public void generatekey(){
 		if((this.passphrase != null || this.passphrase != "") && (this.salt != null ||  this.salt != "")){
 			try {
-				log.info("Generating Key....");
+				log.info("Key wird generiert....");
 				int iterations = 10000;
 				SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
 				tmp = factory.generateSecret(new PBEKeySpec(this.passphrase.toCharArray(), this.salt.getBytes(), iterations, 128));
 				this.key = new SecretKeySpec(tmp.getEncoded(), "AES");
-				log.info("Key generated!");
+				log.info("Key wurde generiert!");
 				this.server = new ClientRegistaration(port, this);
 				this.clients = new ArrayList<TCPVerbindung>();
-				this.log.info("Server started");
+				this.log.info("Server gestarted!");
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 			} catch (InvalidKeySpecException e) {
@@ -206,7 +206,7 @@ public class Controller {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		this.log.info("Nerer Cleint Verbunden: " + socket.getInetAddress().getHostAddress());
+		this.log.info("Neuer Cleint Verbunden: " + socket.getInetAddress().getHostAddress());
 	}
 	/**
 	 * Löscht Client
@@ -287,7 +287,7 @@ public class Controller {
 			rsa.init(Cipher.DECRYPT_MODE, this.privateKey);
 			byte[] kb = rsa.doFinal(msg);
 			this.key = new SecretKeySpec(kb, "AES");
-			this.log.info("Symetric key recieved!");
+			this.log.info("Symetric key empfangen!");
 			//this.log.debug(this.key);
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
@@ -308,17 +308,43 @@ public class Controller {
 	public static void main(String[] args){
 		try {
 			if(args.length > 0){
-				if(args[0].equalsIgnoreCase("s")){
+				if(args[0].equalsIgnoreCase("sd")){
 					new Controller(4444);
+				}else if(args[0].equalsIgnoreCase("cd")){
+					new Controller("127.0.0.1",4444);
+				}else if(args[0].equalsIgnoreCase("s")){
+					if(args.length == 2)
+						new Controller(Integer.parseInt(args[1]));
+					else{
+						System.out.println("Wrong arguments");
+						System.out.println("<ds>");
+						System.out.println("<dc>");
+						System.out.println("<s> <port>");
+						System.out.println("<c> <IP> <port>");
+					}
 				}else if(args[0].equalsIgnoreCase("c")){
-					new Controller("10.0.105.40",4444);
+					if(args.length == 3)
+						new Controller(args[1], Integer.parseInt(args[2]));
+					else{
+						System.out.println("Wrong arguments");
+						System.out.println("<ds>");
+						System.out.println("<dc>");
+						System.out.println("<s> <port>");
+						System.out.println("<c> <IP> <port>");
+					}
 				}
 			}else{
 				System.out.println("Wrong arguments");
+				System.out.println("<ds>");
+				System.out.println("<dc>");
+				System.out.println("<s> <port>");
+				System.out.println("<c> <IP> <port>");
 			}
-			
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
 			e.printStackTrace();
+		} catch(NumberFormatException e){
+			System.err.println("Bitte den Port als Zahl angeben!");
+			System.exit(0);
 		}
 	}
 }
